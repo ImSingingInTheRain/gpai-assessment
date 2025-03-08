@@ -95,7 +95,7 @@ classification = "GPAI" if score >= 10 else "Not GPAI"
 if classification == "GPAI":
     st.subheader("Step 5: Systemic Risk Assessment")
 
-    sys_questions = {  # Exactly as requested
+    sys_questions = {
         "flops": ("Does the model training involve ≥10^25 floating-point operations (FLOP)?", "Models trained above 10^25 FLOPs are considered state-of-the-art (Article 51(1)(a))."),
         "state_of_art": ("Is the model state-of-the-art or pushing state-of-the-art?", "Models advancing the state-of-the-art can pose systemic risks (Recital 110)."),
         "scalability": ("Does the model have significant reach or scalability?", "High scalability or extensive user base can amplify harms."),
@@ -112,7 +112,7 @@ if classification == "GPAI":
     elif sys_answers["scalability"] == "Yes" or sys_answers["scaffolding"] == "Yes":
         systemic_classification = "Borderline systemic risk – Further review recommended"
         st.warning(systemic_classification)
-        final_decision = st.radio("Final systemic risk decision:", ["GPAI with systemic risk", "GPAI without systemic risk"])
+        final_decision = st.radio("Final systemic risk decision:", ["GPAI with systemic risk", "Not GPAI with systemic risk"])
         sys_rationale = st.text_area("Provide rationale:")
         systemic_classification = final_decision
     else:
@@ -123,26 +123,25 @@ if classification == "GPAI":
 model_name = st.text_input("Model Name")
 model_owner = st.text_input("Model Owner")
 
-# Visualize applicable obligations based on classification
+# Properly indent the obligations section under the same if block:
 if classification == "GPAI":
-st.subheader("Applicable Obligations Under the AI Act")
+    st.subheader("Applicable Obligations Under the AI Act")
 
-if systemic_classification == "GPAI with systemic risk":
-    st.error("The following obligations apply:\n"
-             "- Provide technical documentation (Article 53(1)(a-b))\n"
-             "- Public summary of training content (Article 53(1)(d))\n"
-             "- Copyright compliance policy (Article 53(1)(c))\n"
-             "- Systemic risk assessment and mitigation\n"
-             "- Serious incident monitoring and reporting\n"
-             "- Cybersecurity protection")
-elif systemic_classification == "GPAI without systemic risk":
-    st.success("The following obligations apply:\n"
-               "- Provide technical documentation (Article 53(1)(a-b))\n"
-               "- Public summary of training content (Article 53(1)(d))\n"
-               "- Copyright compliance policy (Article 53(1)(c))")
+    if systemic_classification == "GPAI with systemic risk":
+        st.error("The following obligations apply:\n"
+                 "- Provide technical documentation (Article 53(1)(a-b))\n"
+                 "- Public summary of training content (Article 53(1)(d))\n"
+                 "- Copyright compliance policy (Article 53(1)(c))\n"
+                 "- Systemic risk assessment and mitigation\n"
+                 "- Serious incident monitoring and reporting\n"
+                 "- Cybersecurity protection")
+    elif systemic_classification == "GPAI without systemic risk":
+        st.success("The following obligations apply:\n"
+                   "- Provide technical documentation (Article 53(1)(a-b))\n"
+                   "- Public summary of training content (Article 53(1)(d))\n"
+                   "- Copyright compliance policy (Article 53(1)(c))")
 
 # Export results as CSV
-
 if st.button("Export Results as CSV"):
     buffer = io.StringIO()
     export_df = pd.DataFrame({
