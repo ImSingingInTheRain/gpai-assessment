@@ -90,37 +90,35 @@ for key, (question, scoring, guidance) in detailed_questions.items():
     st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
     score += scoring[answers[key]]
 
-classification = "Not GPAI"
-if score >= 10:
-    classification = "GPAI"
-    st.success("General-purpose AI model")
-elif score >= 6:
-    classification = st.radio("Borderline outcome – After further review, classify this model as:", ["GPAI", "Not GPAI"])
-    manual_rationale = st.text_area("Provide rationale for this decision:")
-else:
-    st.error("Not a general-purpose AI model")
+classification = "GPAI" if score >= 10 else "Not GPAI"
 
-# Systemic risk assessment
 if classification == "GPAI":
     st.subheader("Step 5: Systemic Risk Assessment")
 
-    systemic = st.radio("Does the model exceed the systemic risk threshold (≥10^25 FLOPs), or is state-of-the-art with significant reach/scalability?", ["Yes", "No"])
-    if systemic == "Yes":
-        classification = "GPAI with systemic risk"
-        st.error(classification)
+    sys_questions = {  # Exactly as requested
+        "flops": ("Does the model training involve ≥10^25 floating-point operations (FLOP)?", "Models trained above 10^25 FLOPs are considered state-of-the-art (Article 51(1)(a))."),
+        "state_of_art": ("Is the model state-of-the-art or pushing state-of-the-art?", "Models advancing the state-of-the-art can pose systemic risks (Recital 110)."),
+        "scalability": ("Does the model have significant reach or scalability?", "High scalability or extensive user base can amplify harms."),
+        "scaffolding": ("Can the model significantly enable harmful applications through scaffolding?", "Facilitating harmful downstream applications can pose systemic risks.")
+    }
+
+    sys_answers = {}
+    for key, (question, guidance) in sys_questions.items():
+        sys_answers[key] = st.radio(question, ["Yes", "No"], key=f"sys_{key}")
+        st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
+
+    if sys_answers["flops"] == "Yes" or sys_answers["state_of_art"] == "Yes":
+        systemic_classification = "GPAI with systemic risk"
+    elif sys_answers["scalability"] == "Yes" or sys_answers["scaffolding"] == "Yes":
+        systemic_classification = "Borderline systemic risk – Further review recommended"
+        st.warning(systemic_classification)
+        final_decision = st.radio("Final systemic risk decision:", ["GPAI with systemic risk", "Not GPAI with systemic risk"])
+        sys_rationale = st.text_area("Provide rationale:")
+        systemic_classification = final_decision
     else:
-        st.success("GPAI without systemic risk")
+        systemic_classification = "GPAI without systemic risk"
+
+    st.write(systemic_classification)
 
 model_name = st.text_input("Model Name")
 model_owner = st.text_input("Model Owner")
-
-if st.button("Export Assessment as CSV"):
-    export_data = {
-        "Model Name": model_name,
-        "Model Owner": model_owner,
-        "Classification": classification,
-    }
-    df = pd.DataFrame([export_data])
-    buffer = io.StringIO()
-    df.to_csv(buffer, index=False)
-    st.download_button("Download CSV", buffer.getvalue(), f"{model_name}_GPAI_Assessment.csv", "text/csv")
