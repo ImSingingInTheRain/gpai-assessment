@@ -1,147 +1,128 @@
 import streamlit as st
+import pandas as pd
 
-st.title("General-Purpose AI Model (GPAI) Classification Tool")
+st.title("General-Purpose AI Model Classification Tool")
 
 st.info("""
 **Important:**  
-If you use a third-party model **without any modification**, you are **not considered a provider** under the AI Act and no further assessment is needed.
+If your organization uses a third-party model **without any modification**, you are **not considered a provider** under the AI Act and no further assessment is needed.
 """)
 
-st.subheader("Step 1: Automatic Exclusion Check")
-
+st.header("Step 1: Automatic Exclusion Check")
 st.markdown("""
-If your model clearly fits into any of the following specialized categories, it can be automatically excluded:
-- Rule-based Expert Systems
-- Small-scale or Narrow ML Classifiers
-- Traditional Statistical Models (e.g., linear regression)
-- Single-purpose Computer Vision Models
-- Single-purpose NLP Models
-- Single-purpose Recommendation Systems
-- Specialized Anomaly Detection Systems
-- Robotic Process Automation (RPA) Systems
-- Embedded Single-task IoT AI Systems
-""")
+**Criterion:** The AI model is exclusively specialized or narrowly focused without substantial capability to generalize or adapt flexibly across multiple distinct tasks.
 
-auto_exclude = st.radio(
-    "Does your model clearly belong to one of these specialized categories?",
-    ['Yes', 'No']
-)
+**Examples:**
+- Rule-based systems
+- Small supervised classifiers (e.g., spam detection)
+- Single-purpose NLP or vision models
+- Specialized anomaly detection systems
+- Traditional statistical models
+- RPA systems
+""")
+auto_exclude = st.radio("Does this exclusion criterion clearly apply to your AI model?", ['Yes', 'No'])
 
 if auto_exclude == 'Yes':
-    st.error("Automatically excluded – Not a general-purpose AI model.")
+    st.error("Automatically discarded – Not GPAI.")
     st.stop()
 
 st.subheader("Step 2: Provider Determination")
+developed_internally = st.radio("Was the model developed internally or by a third party?", ["Internally Developed", "Third Party"])
 
-developed_internally = st.radio(
-    "Was the model developed internally or by a third party?",
-    ['Internally Developed', 'Third Party']
-)
+if developed_internally == "Third Party":
+    st.info("Since the model is from a third party, please assess modifications to determine if you're a provider.")
 
-if developed_internally == 'Third Party':
-    st.info("You'll need to assess if your modifications are substantial later in the process.")
+    st.subheader("Step 2a: Substantial Modification Assessment")
+
+    mod_questions = {
+        "param_change": ("Are more than 10% of parameters or architecture significantly changed?", "Over 10% change typically indicates substantial modification."),
+        "purpose_change": ("Has the intended purpose or functionality significantly changed or expanded?", "Major task adaptations or new capabilities indicate substantial modification."),
+        "data_change": ("Has significant retraining occurred on specialized or distinctly different datasets?", "Extensive retraining with new datasets indicates substantial modification."),
+        "integration_change": ("Does modification significantly alter downstream applicability or integration possibilities?", "Major changes affecting downstream integration imply substantial modifications.")
+    }
+
+    mod_answers = {}
+    for key, (question, guidance) in mod_questions.items():
+        st.markdown(f"**Guidance:** {guidance}")
+        mod_answers[key] = st.radio(question, ["Yes", "No"], key=key)
+
+    if "Yes" in mod_answers.values():
+        st.warning("Substantial modification – You are considered a provider under the AI Act. Proceed to pre-screening.")
+    else:
+        st.success("Minor modification – Not considered a provider. No further obligations apply.")
+        st.stop()
 
 st.subheader("Step 3: Pre-screening Questions")
 
-q1a = st.radio(
-    "Is the model's parameter count significantly below 1 billion?",
-    ['Yes', 'No']
-)
+pre_questions = {
+    "params_below": ("Is the model's parameter count significantly below 1 billion?", "Recital 98 indicates models significantly below 1 billion parameters lack significant generality."),
+    "trained_specialized": ("Was the model trained on highly specialized or limited data rather than large and diverse datasets?", "General-purpose models typically require large and diverse datasets."),
+    "single_task": ("Does the model exclusively demonstrate competent performance on a single or very narrow task?", "General-purpose models must perform multiple distinct tasks."),
+    "adaptability": ("Is there no clear pathway to adapt the model to different downstream tasks?", "Adaptability via fine-tuning or APIs is required.")
+}
 
-q1b = st.radio(
-    "Was the model trained on highly specialized or limited datasets (rather than large and diverse datasets)?",
-    ['Yes', 'No']
-)
+pre_answers = {}
+eliminate_conditions = 0
 
-q2 = st.radio(
-    "Does the model exclusively demonstrate competent performance on a single or very narrow task?",
-    ['Yes', 'No']
-)
+for key, (question, guidance) in pre_questions.items():
+    st.markdown(f"**Guidance:** {guidance}")
+    answer = st.radio(question, ["Yes", "No"], key=key)
+    pre_answers[key] = answer
 
-q3 = st.radio(
-    "Is there no clear pathway (via fine-tuning, prompt engineering, or APIs) to adapt the model to different downstream tasks?",
-    ['Yes', 'No']
-)
-
-if (q1a == 'Yes' and q1b == 'Yes') or q2 == 'Yes' or q3 == 'Yes':
+if (pre_answers["params_below"] == "Yes" and pre_answers["trained_specialized"] == "Yes") or pre_answers["single_task"] == "Yes" or pre_answers["adaptability"] == "Yes":
     st.error("Eliminated (Not GPAI)")
+    st.stop()
+
+st.subheader("Step 4: Detailed GPAI Assessment")
+
+score = 0
+answers = {}
+detailed_questions = {
+    "params": ("Does the model have at least 1 billion parameters?", {"Yes": 2, "No": 0}, "Models ≥1B parameters indicate significant generality (Recital 98)."),
+    "training": ("Was the model trained on large diverse datasets using self-supervision?", {"Yes": 2, "Partly": 1, "No": 0}, "Generality arises from extensive data and self-supervised learning."),
+    "tasks": ("Does the model demonstrate competent performance in multiple distinct tasks?", {"Yes":2,"Partly":1,"No":0}, "Competence in multiple tasks characterizes GPAI."),
+    "generative": ("Can the model generate adaptable content across tasks/domains?", {"Yes":2,"Partly":1,"No":0}, "Generative flexibility aligns with GPAI."),
+    "modality": ("What data modality does the model handle?", {"Multi-modal":2,"Single-flexible":1,"Single-specialized":0}, "Multi-modality or flexible single-modality aligns with GPAI criteria."),
+    "integration": ("Can the model be readily integrated, fine-tuned, or prompt-engineered for new applications?", {"Yes":2,"No":0}, "High adaptability supports GPAI classification."),
+    "use_cases": ("Are there multiple known or intended downstream use cases spanning different domains?", {"Yes":2,"Partial":1,"No":0}, "Broad downstream applicability supports GPAI.")
+}
+
+for key, (question, scoring, guidance) in detailed_questions.items():
+    st.markdown(f"**Guidance:** {guidance}")
+    answer = st.radio(question, list(scoring.keys()), key=f"detailed_{key}")
+    answers[key] = answer
+    score += scoring[answer]
+
+st.subheader("Classification Result")
+
+if score >= 10:
+    classification = "General-purpose AI model"
+    st.success(classification)
+elif score >= 6:
+    classification = "Borderline – Further review recommended"
+    st.warning(classification)
+    st.subheader("Additional Review Required")
+    final_decision = st.radio("After further review, classify this model as:", ["GPAI", "Not GPAI"])
+    manual_rationale = st.text_area("Enter your rationale for the classification decision:")
+    classification = "General-purpose AI model" if final_decision == "GPAI" else "Not a general-purpose AI model"
 else:
-    st.success("Passed Pre-screening – Proceed to Detailed Assessment")
+    classification = "Not a general-purpose AI model"
+    st.error(classification)
 
-    if developed_internally == 'Third Party':
-        st.subheader("Step 3a: Substantial Modification Assessment")
+if classification == "General-purpose AI model":
+    st.subheader("Export Results")
+    model_name = st.text_input("Model Name")
+    model_owner = st.text_input("Model Owner")
 
-        mod1 = st.radio(
-            "Have more than 10% of the model's parameters or architecture been significantly changed?",
-            ['Yes', 'No']
-        )
-        mod2 = st.radio(
-            "Has the intended purpose or functionality significantly changed or expanded?",
-            ['Yes', 'No']
-        )
-        mod3 = st.radio(
-            "Has significant retraining occurred on specialized or distinctly different datasets?",
-            ['Yes', 'No']
-        )
-        mod4 = st.radio(
-            "Does modification significantly alter the model’s ease of integration or use in diverse downstream systems?",
-            ['Yes', 'No']
-        )
-
-        if 'Yes' in [mod1, mod2, mod3, mod4]:
-            st.warning("Substantial Modification – You are considered a Provider under the AI Act.")
-        else:
-            st.success("Minor Modification – You are NOT considered a provider. No further obligations apply.")
-
-    st.subheader("Step 4: Detailed GPAI Assessment")
-
-    score = 0
-
-    if st.radio(
-        "Does the model have at least 1 billion parameters?",
-        ['Yes', 'No']
-    ) == 'Yes':
-        score += 2
-
-    training = st.radio(
-        "Was the model trained on large and diverse datasets using self-supervision or other large-scale (semi-)unsupervised methods?",
-        ['Yes', 'Partly', 'No']
-    )
-    score += {'Yes': 2, 'Partly': 1, 'No': 0}[training]
-
-    tasks = st.radio(
-        "Does the model demonstrate competent performance in multiple, distinct tasks?",
-        ['Yes', 'Partly', 'No']
-    )
-    score += {'Yes': 2, 'Partly': 1, 'No': 0}[tasks]
-
-    generative = st.radio(
-        "Can the model generate new content (text, images, audio, or video) adaptable to various downstream tasks or domains?",
-        ['Yes', 'Partly', 'No']
-    )
-    score += {'Yes': 2, 'Partly': 1, 'No': 0}[generative]
-
-    modality = st.radio(
-        "What data modality does the model handle?",
-        ['Multi-modal', 'Single-flexible', 'Single-specialized']
-    )
-    score += {'Multi-modal': 2, 'Single-flexible': 1, 'Single-specialized': 0}[modality]
-
-    adaptable = st.radio(
-        "Can the model be readily integrated, fine-tuned, or prompt-engineered for new applications?",
-        ['Yes', 'No']
-    )
-    score += 2 if adaptable == 'Yes' else 0
-
-    use_cases = st.radio(
-        "Are there multiple known or intended downstream use cases spanning different domains?",
-        ['Yes', 'Partial', 'No']
-    )
-    score += {'Yes': 2, 'Partial': 1, 'No': 0}[use_cases]
-
-    if score >= 10:
-        st.success(f"Score: {score} – General-purpose AI model")
-    elif score >= 6:
-        st.warning(f"Score: {score} – Borderline: Further review recommended.")
-    else:
-        st.error(f"Score: {score} – Not a general-purpose AI model.")
+    if st.button("Export Classification Results"):
+        df = pd.DataFrame({
+            "Model Name": [model_name],
+            "Model Owner": [model_owner],
+            "Score": [score],
+            "Classification": [classification],
+            "Manual Rationale": [manual_rationale if score < 10 else "Automatic GPAI"]
+        })
+        df.to_csv("GPAI_Classification_Results.csv", index=False)
+        st.success("Results exported successfully.")
+else:
+    st.error("Not a general-purpose AI model")
