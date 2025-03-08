@@ -1,151 +1,147 @@
 import streamlit as st
-import pandas as pd
-import math
-from pathlib import Path
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
+st.title("General-Purpose AI Model (GPAI) Classification Tool")
+
+st.info("""
+**Important:**  
+If you use a third-party model **without any modification**, you are **not considered a provider** under the AI Act and no further assessment is needed.
+""")
+
+st.subheader("Step 1: Automatic Exclusion Check")
+
+st.markdown("""
+If your model clearly fits into any of the following specialized categories, it can be automatically excluded:
+- Rule-based Expert Systems
+- Small-scale or Narrow ML Classifiers
+- Traditional Statistical Models (e.g., linear regression)
+- Single-purpose Computer Vision Models
+- Single-purpose NLP Models
+- Single-purpose Recommendation Systems
+- Specialized Anomaly Detection Systems
+- Robotic Process Automation (RPA) Systems
+- Embedded Single-task IoT AI Systems
+""")
+
+auto_exclude = st.radio(
+    "Does your model clearly belong to one of these specialized categories?",
+    ['Yes', 'No']
 )
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+if auto_exclude == 'Yes':
+    st.error("Automatically excluded – Not a general-purpose AI model.")
+    st.stop()
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+st.subheader("Step 2: Provider Determination")
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
-
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
-
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
-
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
-
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
-
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
+developed_internally = st.radio(
+    "Was the model developed internally or by a third party?",
+    ['Internally Developed', 'Third Party']
 )
 
-''
-''
+if developed_internally == 'Third Party':
+    st.info("You'll need to assess if your modifications are substantial later in the process.")
 
+st.subheader("Step 3: Pre-screening Questions")
 
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
+q1a = st.radio(
+    "Is the model's parameter count significantly below 1 billion?",
+    ['Yes', 'No']
+)
 
-st.header(f'GDP in {to_year}', divider='gray')
+q1b = st.radio(
+    "Was the model trained on highly specialized or limited datasets (rather than large and diverse datasets)?",
+    ['Yes', 'No']
+)
 
-''
+q2 = st.radio(
+    "Does the model exclusively demonstrate competent performance on a single or very narrow task?",
+    ['Yes', 'No']
+)
 
-cols = st.columns(4)
+q3 = st.radio(
+    "Is there no clear pathway (via fine-tuning, prompt engineering, or APIs) to adapt the model to different downstream tasks?",
+    ['Yes', 'No']
+)
 
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
+if (q1a == 'Yes' and q1b == 'Yes') or q2 == 'Yes' or q3 == 'Yes':
+    st.error("Eliminated (Not GPAI)")
+else:
+    st.success("Passed Pre-screening – Proceed to Detailed Assessment")
 
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
+    if developed_internally == 'Third Party':
+        st.subheader("Step 3a: Substantial Modification Assessment")
 
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
+        mod1 = st.radio(
+            "Have more than 10% of the model's parameters or architecture been significantly changed?",
+            ['Yes', 'No']
         )
+        mod2 = st.radio(
+            "Has the intended purpose or functionality significantly changed or expanded?",
+            ['Yes', 'No']
+        )
+        mod3 = st.radio(
+            "Has significant retraining occurred on specialized or distinctly different datasets?",
+            ['Yes', 'No']
+        )
+        mod4 = st.radio(
+            "Does modification significantly alter the model’s ease of integration or use in diverse downstream systems?",
+            ['Yes', 'No']
+        )
+
+        if 'Yes' in [mod1, mod2, mod3, mod4]:
+            st.warning("Substantial Modification – You are considered a Provider under the AI Act.")
+        else:
+            st.success("Minor Modification – You are NOT considered a provider. No further obligations apply.")
+
+    st.subheader("Step 4: Detailed GPAI Assessment")
+
+    score = 0
+
+    if st.radio(
+        "Does the model have at least 1 billion parameters?",
+        ['Yes', 'No']
+    ) == 'Yes':
+        score += 2
+
+    training = st.radio(
+        "Was the model trained on large and diverse datasets using self-supervision or other large-scale (semi-)unsupervised methods?",
+        ['Yes', 'Partly', 'No']
+    )
+    score += {'Yes': 2, 'Partly': 1, 'No': 0}[training]
+
+    tasks = st.radio(
+        "Does the model demonstrate competent performance in multiple, distinct tasks?",
+        ['Yes', 'Partly', 'No']
+    )
+    score += {'Yes': 2, 'Partly': 1, 'No': 0}[tasks]
+
+    generative = st.radio(
+        "Can the model generate new content (text, images, audio, or video) adaptable to various downstream tasks or domains?",
+        ['Yes', 'Partly', 'No']
+    )
+    score += {'Yes': 2, 'Partly': 1, 'No': 0}[generative]
+
+    modality = st.radio(
+        "What data modality does the model handle?",
+        ['Multi-modal', 'Single-flexible', 'Single-specialized']
+    )
+    score += {'Multi-modal': 2, 'Single-flexible': 1, 'Single-specialized': 0}[modality]
+
+    adaptable = st.radio(
+        "Can the model be readily integrated, fine-tuned, or prompt-engineered for new applications?",
+        ['Yes', 'No']
+    )
+    score += 2 if adaptable == 'Yes' else 0
+
+    use_cases = st.radio(
+        "Are there multiple known or intended downstream use cases spanning different domains?",
+        ['Yes', 'Partial', 'No']
+    )
+    score += {'Yes': 2, 'Partial': 1, 'No': 0}[use_cases]
+
+    if score >= 10:
+        st.success(f"Score: {score} – General-purpose AI model")
+    elif score >= 6:
+        st.warning(f"Score: {score} – Borderline: Further review recommended.")
+    else:
+        st.error(f"Score: {score} – Not a general-purpose AI model.")
