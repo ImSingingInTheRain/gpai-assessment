@@ -141,8 +141,6 @@ elif classification == "GPAI without systemic risk":
                "- Copyright compliance policy (Article 53(1)(c))")
 
 # Export results as CSV
-model_name = st.text_input("Model Name")
-model_owner = st.text_input("Model Owner")
 
 if st.button("Export Results as CSV"):
     buffer = io.StringIO()
