@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import fpdf as fpdf
 from fpdf import FPDF
 
 st.title("General-Purpose AI Model Classification Tool")
