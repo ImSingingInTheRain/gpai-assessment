@@ -90,7 +90,7 @@ for key, (question, scoring, guidance) in detailed_questions.items():
     st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
     score += scoring[answers[key]]
 
-classification = ""
+classification = "Not GPAI"
 if score >= 10:
     classification = "GPAI"
     st.success("General-purpose AI model")
@@ -98,18 +98,29 @@ elif score >= 6:
     classification = st.radio("Borderline outcome – After further review, classify this model as:", ["GPAI", "Not GPAI"])
     manual_rationale = st.text_area("Provide rationale for this decision:")
 else:
-    classification = "Not GPAI"
     st.error("Not a general-purpose AI model")
 
+# Systemic risk assessment
 if classification == "GPAI":
-    model_name = st.text_input("Model Name")
-    model_owner = st.text_input("Model Owner")
+    st.subheader("Step 5: Systemic Risk Assessment")
 
+    systemic = st.radio("Does the model exceed the systemic risk threshold (≥10^25 FLOPs), or is state-of-the-art with significant reach/scalability?", ["Yes", "No"])
+    if systemic == "Yes":
+        classification = "GPAI with systemic risk"
+        st.error(classification)
+    else:
+        st.success("GPAI without systemic risk")
+
+model_name = st.text_input("Model Name")
+model_owner = st.text_input("Model Owner")
+
+if st.button("Export Assessment as CSV"):
+    export_data = {
+        "Model Name": model_name,
+        "Model Owner": model_owner,
+        "Classification": classification,
+    }
+    df = pd.DataFrame([export_data])
     buffer = io.StringIO()
-    if st.button("Export Results as CSV"):
-        df = pd.DataFrame({"Question": detailed_questions.keys(), "Answer": answers.values(), "Guidance": [detailed_questions[q][2] for q in detailed_questions]})
-        df["Model Name"] = model_name
-        df["Model Owner"] = model_owner
-        df["Classification"] = classification
-        df.to_csv(buffer, index=False)
-        st.download_button("Download CSV", buffer.getvalue(), "GPAI_Classification_Results.csv", "text/csv")
+    df.to_csv(buffer, index=False)
+    st.download_button("Download CSV", buffer.getvalue(), f"{model_name}_GPAI_Assessment.csv", "text/csv")
