@@ -134,7 +134,7 @@ if systemic_classification == "GPAI with systemic risk":
              "- Systemic risk assessment and mitigation\n"
              "- Serious incident monitoring and reporting\n"
              "- Cybersecurity protection")
-elif classification == "GPAI without systemic risk":
+elif systemic_classification == "GPAI without systemic risk":
     st.success("The following obligations apply:\n"
                "- Provide technical documentation (Article 53(1)(a-b))\n"
                "- Public summary of training content (Article 53(1)(d))\n"
