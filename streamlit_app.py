@@ -122,6 +122,7 @@ if classification == "GPAI":
 
 model_name = st.text_input("Model Name")
 model_owner = st.text_input("Model Owner")
+
 # Visualize applicable obligations based on classification
 st.subheader("Applicable Obligations Under the AI Act")
 
