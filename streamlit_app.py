@@ -227,3 +227,49 @@ if classification == "GPAI":
     else:
         # If user chose "Not GPAI with systemic risk" in borderline scenario
         st.warning("No obligations apply because the final classification is 'Not GPAI with systemic risk'.")
+        # --- Add these lines at the bottom, within `if classification == "GPAI":` ---
+
+# Let the user specify a model name or unique identifier
+model_name = st.text_input("Model Name or Unique Identifier", key="model_name")
+model_owner = st.text_input("Model Owner", key="model_owner")
+
+# Collect all answers and classification results in one dictionary
+# (Assuming mod_answers, pre_answers, answers, sys_risk_answers exist and are in scope)
+all_data = {
+    "Model Name": model_name,
+    "Model Owner": model_owner,
+    "Final Classification": classification,
+    # Only add the systemic classification if we do have it
+    "Systemic Risk Classification": systemic_classification,
+}
+
+# Optionally merge in each dictionary of answers to create a full record
+# Prefix each group so it’s clear which step the answers belong to
+for k, v in mod_answers.items():
+    all_data[f"Step2_ModAssessment_{k}"] = v
+
+for k, v in pre_answers.items():
+    all_data[f"Step3_PreScreen_{k}"] = v
+
+for k, v in answers.items():
+    all_data[f"Step4_Detailed_{k}"] = v
+
+for k, v in sys_risk_answers.items():
+    all_data[f"Step5_SysRisk_{k}"] = v
+
+# Create a download button that delivers a CSV
+if st.button("Download CSV Summary"):
+    import io
+    import pandas as pd
+
+    buffer = io.StringIO()
+    df = pd.DataFrame([all_data])    # Single-row DataFrame
+    df.to_csv(buffer, index=False)
+    
+    # Provide a download button to export the CSV
+    st.download_button(
+        label="Click to Download CSV",
+        data=buffer.getvalue(),
+        file_name=f"{model_name}_assessment.csv",
+        mime="text/csv"
+    )
