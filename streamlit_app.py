@@ -2,6 +2,17 @@ import streamlit as st
 import pandas as pd
 import io
 
+# ---------------------------------------------
+# Initialize answer dictionaries so they're in scope
+# ---------------------------------------------
+mod_answers = {}
+pre_answers = {}
+answers = {}
+sys_risk_answers = {}
+
+# ---------------------------------------------
+# Title and Intro
+# ---------------------------------------------
 st.title("General-Purpose AI Model Classification Tool")
 
 st.info("""
@@ -9,9 +20,9 @@ st.info("""
 If your organization uses a third-party model **without any modification**, you are **not considered a provider** under the AI Act and no further assessment is needed.
 """)
 
-# ----------------------
-# Step 1: Automatic Exclusion
-# ----------------------
+# ---------------------------------------------
+# Step 1: Automatic Exclusion Check
+# ---------------------------------------------
 st.header("Step 1: Automatic Exclusion Check")
 st.markdown("""
 **Criterion:** The AI model is exclusively specialized or narrowly focused without substantial capability to generalize or adapt flexibly across multiple distinct tasks.
@@ -34,9 +45,9 @@ if auto_exclude == 'Yes':
     st.error("Automatically discarded – Not GPAI.")
     st.stop()
 
-# ----------------------
+# ---------------------------------------------
 # Step 2: Provider Determination
-# ----------------------
+# ---------------------------------------------
 st.subheader("Step 2: Provider Determination")
 developed_internally = st.radio(
     "Was the model developed internally or by a third party?",
@@ -46,48 +57,62 @@ developed_internally = st.radio(
 
 if developed_internally == "Third Party":
     st.info("Since the model is from a third party, please assess modifications to determine if you're a provider.")
-    
+
     st.subheader("Step 2a: Substantial Modification Assessment")
-    
+
     mod_questions = {
-        "param_change": ("Are more than 10% of parameters or architecture significantly changed?",
-                         "Over 10% change typically indicates substantial modification."),
-        "purpose_change": ("Has the intended purpose or functionality significantly changed or expanded?",
-                           "Major task adaptations or new capabilities indicate substantial modification."),
-        "data_change": ("Has significant retraining occurred on specialized or distinctly different datasets?",
-                        "Extensive retraining with new datasets indicates substantial modification."),
-        "integration_change": ("Does modification significantly alter downstream applicability or integration possibilities?",
-                               "Major changes affecting downstream integration imply substantial modifications.")
+        "param_change": (
+            "Are more than 10% of parameters or architecture significantly changed?",
+            "Over 10% change typically indicates substantial modification."
+        ),
+        "purpose_change": (
+            "Has the intended purpose or functionality significantly changed or expanded?",
+            "Major task adaptations or new capabilities indicate substantial modification."
+        ),
+        "data_change": (
+            "Has significant retraining occurred on specialized or distinctly different datasets?",
+            "Extensive retraining with new datasets indicates substantial modification."
+        ),
+        "integration_change": (
+            "Does modification significantly alter downstream applicability or integration possibilities?",
+            "Major changes affecting downstream integration imply substantial modifications."
+        ),
     }
-    
-    mod_answers = {}
+
     for key, (question, guidance) in mod_questions.items():
         mod_answers[key] = st.radio(question, ["Yes", "No"], key=f"mod_{key}")
         st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
-    
+
     if "Yes" in mod_answers.values():
         st.warning("Substantial modification – You are considered a provider under the AI Act. Proceed to pre-screening.")
     else:
         st.success("Minor modification – Not considered a provider. No further obligations apply.")
         st.stop()
 
-# ----------------------
+# ---------------------------------------------
 # Step 3: Pre-screening Questions
-# ----------------------
+# ---------------------------------------------
 st.subheader("Step 3: Pre-screening Questions")
 
 pre_questions = {
-    "params_below": ("Is the model's parameter count significantly below 1 billion?",
-                     "Models significantly below 1 billion parameters lack significant generality."),
-    "trained_specialized": ("Was the model trained on highly specialized or limited data rather than large and diverse datasets?",
-                            "General-purpose models typically require large and diverse datasets."),
-    "single_task": ("Does the model exclusively demonstrate competent performance on a single or very narrow task?",
-                    "General-purpose models must perform multiple distinct tasks."),
-    "adaptability": ("Is there no clear pathway to adapt the model to different downstream tasks?",
-                     "Adaptability via fine-tuning or APIs is required.")
+    "params_below": (
+        "Is the model's parameter count significantly below 1 billion?",
+        "Models significantly below 1 billion parameters lack significant generality."
+    ),
+    "trained_specialized": (
+        "Was the model trained on highly specialized or limited data rather than large and diverse datasets?",
+        "General-purpose models typically require large and diverse datasets."
+    ),
+    "single_task": (
+        "Does the model exclusively demonstrate competent performance on a single or very narrow task?",
+        "General-purpose models must perform multiple distinct tasks."
+    ),
+    "adaptability": (
+        "Is there no clear pathway to adapt the model to different downstream tasks?",
+        "Adaptability via fine-tuning or APIs is required."
+    )
 }
 
-pre_answers = {}
 for key, (question, guidance) in pre_questions.items():
     pre_answers[key] = st.radio(question, ["Yes", "No"], key=f"pre_{key}")
     st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
@@ -100,13 +125,12 @@ if (
     st.error("Eliminated (Not GPAI)")
     st.stop()
 
-# ----------------------
+# ---------------------------------------------
 # Step 4: Detailed GPAI Assessment
-# ----------------------
+# ---------------------------------------------
 st.subheader("Step 4: Detailed GPAI Assessment")
 
 score = 0
-answers = {}
 
 detailed_questions = {
     "params": (
@@ -151,11 +175,11 @@ for key, (question, scoring, guidance) in detailed_questions.items():
     st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
     score += scoring[answers[key]]
 
-# Determine classification based on score
+# Scoring-based classification
 if score >= 10:
     classification = "GPAI"
 elif score >= 6:
-    # Borderline scenario: let user pick final classification
+    # Borderline scenario: prompt user to finalize classification
     classification = st.radio(
         "Borderline outcome – classify this model as:",
         ["GPAI", "Not GPAI"],
@@ -165,11 +189,11 @@ elif score >= 6:
 else:
     classification = "Not GPAI"
 
-st.write("Final Classification: ", classification)
+st.write("Final Classification:", classification)
 
-# ----------------------
-# Step 5: Systemic Risk Assessment (ONLY if GPAI)
-# ----------------------
+# ---------------------------------------------
+# Step 5: Systemic Risk Assessment (if GPAI)
+# ---------------------------------------------
 if classification == "GPAI":
     st.subheader("Step 5: Systemic Risk Assessment")
 
@@ -180,7 +204,6 @@ if classification == "GPAI":
         "scaffolding": "Can the model significantly enable harmful applications through scaffolding?"
     }
 
-    sys_risk_answers = {}
     for key, question in sys_risk_questions.items():
         sys_risk_answers[key] = st.radio(question, ["Yes", "No"], key=f"sysrisk_{key}")
 
@@ -188,12 +211,11 @@ if classification == "GPAI":
     if sys_risk_answers["flops"] == "Yes" or sys_risk_answers["state_of_art"] == "Yes":
         systemic_classification = "GPAI with systemic risk"
     elif sys_risk_answers["scalability"] == "Yes" or sys_risk_answers["scaffolding"] == "Yes":
-        # Borderline scenario for systemic risk
         borderline_text = "Borderline systemic risk – Further review recommended"
         st.warning(borderline_text)
         final_decision = st.radio(
             "Final systemic risk decision:",
-            ["GPAI with systemic risk", "GPAI without systemic risk"],
+            ["GPAI with systemic risk", "Not GPAI with systemic risk"],
             key="final_sys_decision"
         )
         sys_rationale = st.text_area("Provide rationale:", key="sys_rationale")
@@ -203,9 +225,7 @@ if classification == "GPAI":
 
     st.write("Systemic Risk Classification:", systemic_classification)
 
-    # -------------------------------------
-    # Obligations Visualization (Only if GPAI)
-    # -------------------------------------
+    # Obligations Visualization
     st.subheader("Applicable Obligations Under the AI Act")
     if systemic_classification == "GPAI with systemic risk":
         st.error(
@@ -225,51 +245,47 @@ if classification == "GPAI":
             "- Copyright compliance policy (Article 53(1)(c))"
         )
     else:
-        # If user chose "Not GPAI with systemic risk" in borderline scenario
         st.warning("No obligations apply because the final classification is 'Not GPAI with systemic risk'.")
-        # --- Add these lines at the bottom, within `if classification == "GPAI":` ---
 
-# Let the user specify a model name or unique identifier
-model_name = st.text_input("Model Name or Unique Identifier", key="model_name")
-model_owner = st.text_input("Model Owner", key="model_owner")
+    # ---------------------------------------------
+    # Final Step: Model Details + CSV Download
+    # ---------------------------------------------
+    model_name = st.text_input("Model Name or Unique Identifier", key="model_name")
+    model_owner = st.text_input("Model Owner", key="model_owner")
 
-# Collect all answers and classification results in one dictionary
-# (Assuming mod_answers, pre_answers, answers, sys_risk_answers exist and are in scope)
-all_data = {
-    "Model Name": model_name,
-    "Model Owner": model_owner,
-    "Final Classification": classification,
-    # Only add the systemic classification if we do have it
-    "Systemic Risk Classification": systemic_classification,
-}
+    # Gather all relevant answers
+    all_data = {
+        "Model Name": model_name,
+        "Model Owner": model_owner,
+        "Final Classification": classification,
+        "Systemic Risk Classification": systemic_classification,
+    }
 
-# Optionally merge in each dictionary of answers to create a full record
-# Prefix each group so it’s clear which step the answers belong to
-for k, v in mod_answers.items():
-    all_data[f"Step2_ModAssessment_{k}"] = v
-
-for k, v in pre_answers.items():
-    all_data[f"Step3_PreScreen_{k}"] = v
-
-for k, v in answers.items():
-    all_data[f"Step4_Detailed_{k}"] = v
-
-for k, v in sys_risk_answers.items():
-    all_data[f"Step5_SysRisk_{k}"] = v
-
-# Create a download button that delivers a CSV
-if st.button("Download CSV Summary"):
-    import io
-    import pandas as pd
-
-    buffer = io.StringIO()
-    df = pd.DataFrame([all_data])    # Single-row DataFrame
-    df.to_csv(buffer, index=False)
+    # Merge Step 2 answers (only if third party, otherwise might be empty)
+    for k, v in mod_answers.items():
+        all_data[f"Step2_ModAssessment_{k}"] = v
     
-    # Provide a download button to export the CSV
-    st.download_button(
-        label="Click to Download CSV",
-        data=buffer.getvalue(),
-        file_name=f"{model_name}_assessment.csv",
-        mime="text/csv"
-    )
+    # Merge Step 3 answers
+    for k, v in pre_answers.items():
+        all_data[f"Step3_PreScreen_{k}"] = v
+
+    # Merge Step 4 answers
+    for k, v in answers.items():
+        all_data[f"Step4_Detailed_{k}"] = v
+
+    # Merge Step 5 answers
+    for k, v in sys_risk_answers.items():
+        all_data[f"Step5_SysRisk_{k}"] = v
+
+    # Download button for CSV
+    if st.button("Download CSV Summary"):
+        buffer = io.StringIO()
+        df = pd.DataFrame([all_data])  # single-row dataframe
+        df.to_csv(buffer, index=False)
+
+        st.download_button(
+            label="Click to Download CSV",
+            data=buffer.getvalue(),
+            file_name=f"{model_name}_assessment.csv",
+            mime="text/csv"
+        )
