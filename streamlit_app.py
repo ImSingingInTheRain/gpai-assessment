@@ -124,6 +124,7 @@ model_name = st.text_input("Model Name")
 model_owner = st.text_input("Model Owner")
 
 # Visualize applicable obligations based on classification
+if classification == "GPAI":
 st.subheader("Applicable Obligations Under the AI Act")
 
 if systemic_classification == "GPAI with systemic risk":
