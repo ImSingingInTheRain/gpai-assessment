@@ -126,7 +126,7 @@ model_owner = st.text_input("Model Owner")
 # Visualize applicable obligations based on classification
 st.subheader("Applicable Obligations Under the AI Act")
 
-if classification == "GPAI with systemic risk":
+if systemic_classification == "GPAI with systemic risk":
     st.error("The following obligations apply:\n"
              "- Provide technical documentation (Article 53(1)(a-b))\n"
              "- Public summary of training content (Article 53(1)(d))\n"
