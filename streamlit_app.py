@@ -112,7 +112,7 @@ if classification == "GPAI":
     elif sys_answers["scalability"] == "Yes" or sys_answers["scaffolding"] == "Yes":
         systemic_classification = "Borderline systemic risk – Further review recommended"
         st.warning(systemic_classification)
-        final_decision = st.radio("Final systemic risk decision:", ["GPAI with systemic risk", "Not GPAI with systemic risk"])
+        final_decision = st.radio("Final systemic risk decision:", ["GPAI with systemic risk", "GPAI without systemic risk"])
         sys_rationale = st.text_area("Provide rationale:")
         systemic_classification = final_decision
     else:
