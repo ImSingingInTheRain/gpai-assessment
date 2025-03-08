@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from fpdf import FPDF
 
 st.title("General-Purpose AI Model Classification Tool")
 
@@ -43,8 +44,8 @@ if developed_internally == "Third Party":
 
     mod_answers = {}
     for key, (question, guidance) in mod_questions.items():
-        st.markdown(f"**Guidance:** {guidance}")
         mod_answers[key] = st.radio(question, ["Yes", "No"], key=key)
+        st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
 
     if "Yes" in mod_answers.values():
         st.warning("Substantial modification – You are considered a provider under the AI Act. Proceed to pre-screening.")
@@ -55,19 +56,16 @@ if developed_internally == "Third Party":
 st.subheader("Step 3: Pre-screening Questions")
 
 pre_questions = {
-    "params_below": ("Is the model's parameter count significantly below 1 billion?", "Recital 98 indicates models significantly below 1 billion parameters lack significant generality."),
+    "params_below": ("Is the model's parameter count significantly below 1 billion?", "Models significantly below 1 billion parameters lack significant generality."),
     "trained_specialized": ("Was the model trained on highly specialized or limited data rather than large and diverse datasets?", "General-purpose models typically require large and diverse datasets."),
     "single_task": ("Does the model exclusively demonstrate competent performance on a single or very narrow task?", "General-purpose models must perform multiple distinct tasks."),
     "adaptability": ("Is there no clear pathway to adapt the model to different downstream tasks?", "Adaptability via fine-tuning or APIs is required.")
 }
 
 pre_answers = {}
-eliminate_conditions = 0
-
 for key, (question, guidance) in pre_questions.items():
-    st.markdown(f"**Guidance:** {guidance}")
-    answer = st.radio(question, ["Yes", "No"], key=key)
-    pre_answers[key] = answer
+    pre_answers[key] = st.radio(question, ["Yes", "No"], key=key)
+    st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
 
 if (pre_answers["params_below"] == "Yes" and pre_answers["trained_specialized"] == "Yes") or pre_answers["single_task"] == "Yes" or pre_answers["adaptability"] == "Yes":
     st.error("Eliminated (Not GPAI)")
@@ -79,50 +77,45 @@ score = 0
 answers = {}
 detailed_questions = {
     "params": ("Does the model have at least 1 billion parameters?", {"Yes": 2, "No": 0}, "Models ≥1B parameters indicate significant generality (Recital 98)."),
-    "training": ("Was the model trained on large diverse datasets using self-supervision?", {"Yes": 2, "Partly": 1, "No": 0}, "Generality arises from extensive data and self-supervised learning."),
+    "training": ("Was the model trained on large diverse datasets using self-supervision?", {"Yes":2,"Partly":1,"No":0}, "Generality arises from extensive data and self-supervised learning."),
     "tasks": ("Does the model demonstrate competent performance in multiple distinct tasks?", {"Yes":2,"Partly":1,"No":0}, "Competence in multiple tasks characterizes GPAI."),
-    "generative": ("Can the model generate adaptable content across tasks/domains?", {"Yes":2,"Partly":1,"No":0}, "Generative flexibility aligns with GPAI."),
+    "generative": ("Can the model generate new adaptable content across tasks/domains?", {"Yes":2,"Partly":1,"No":0}, "Generative flexibility aligns with GPAI."),
     "modality": ("What data modality does the model handle?", {"Multi-modal":2,"Single-flexible":1,"Single-specialized":0}, "Multi-modality or flexible single-modality aligns with GPAI criteria."),
     "integration": ("Can the model be readily integrated, fine-tuned, or prompt-engineered for new applications?", {"Yes":2,"No":0}, "High adaptability supports GPAI classification."),
     "use_cases": ("Are there multiple known or intended downstream use cases spanning different domains?", {"Yes":2,"Partial":1,"No":0}, "Broad downstream applicability supports GPAI.")
 }
 
 for key, (question, scoring, guidance) in detailed_questions.items():
-    st.markdown(f"**Guidance:** {guidance}")
-    answer = st.radio(question, list(scoring.keys()), key=f"detailed_{key}")
-    answers[key] = answer
-    score += scoring[answer]
+    answers[key] = st.radio(question, list(scoring.keys()), key=f"detailed_{key}")
+    st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
+    score += scoring[answers[key]]
 
 st.subheader("Classification Result")
 
+classification = ""
 if score >= 10:
     classification = "General-purpose AI model"
     st.success(classification)
 elif score >= 6:
     classification = "Borderline – Further review recommended"
     st.warning(classification)
-    st.subheader("Additional Review Required")
-    final_decision = st.radio("After further review, classify this model as:", ["GPAI", "Not GPAI"])
-    manual_rationale = st.text_area("Enter your rationale for the classification decision:")
-    classification = "General-purpose AI model" if final_decision == "GPAI" else "Not a general-purpose AI model"
+    final_decision = st.radio("After additional review, classify this model as:", ["GPAI", "Not GPAI"])
+    manual_rationale = st.text_area("Please provide your rationale for this classification:")
+    classification = final_decision
 else:
     classification = "Not a general-purpose AI model"
-    st.error(classification)
 
-if classification == "General-purpose AI model":
-    st.subheader("Export Results")
+if classification == "GPAI":
     model_name = st.text_input("Model Name")
     model_owner = st.text_input("Model Owner")
 
-    if st.button("Export Classification Results"):
-        df = pd.DataFrame({
-            "Model Name": [model_name],
-            "Model Owner": [model_owner],
-            "Score": [score],
-            "Classification": [classification],
-            "Manual Rationale": [manual_rationale if score < 10 else "Automatic GPAI"]
-        })
-        df.to_csv("GPAI_Classification_Results.csv", index=False)
-        st.success("Results exported successfully.")
-else:
-    st.error("Not a general-purpose AI model")
+    if st.button("Export Results as PDF"):
+        from fpdf import FPDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt=f"Model Name: {model_name}", ln=True)
+        pdf.cell(200, 10, txt=f"Model Owner: {model_owner}", ln=True)
+        pdf.cell(200, 10, txt=f"Classification: {classification}", ln=True)
+        pdf.output("GPAI_Classification_Results.pdf")
+        st.success("PDF exported successfully.")
