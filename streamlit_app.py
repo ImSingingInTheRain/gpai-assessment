@@ -26,7 +26,7 @@ This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).
 - Traditional statistical models  
 - RPA systems.
 
-Confirm your model is not in these categories before proceeding.
+Confirm your model is not in these categories.
 """)
 
 # ---------------------------------------------
