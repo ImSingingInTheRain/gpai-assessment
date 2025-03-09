@@ -24,7 +24,7 @@ This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).
 - Single-purpose NLP or vision models  
 - Specialized anomaly detection systems  
 - Traditional statistical models  
-- RPA systems
+- RPA systems.
 
 Confirm your model is not in these categories before proceeding.
 """)
@@ -120,9 +120,27 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 1. Intended Purpose Change (30%)
     st.subheader("Intended Purpose Change (30%)")
     intended_purpose_subcriteria = {
-         "new_use_case": "New Use Case Identification: Does the modification introduce a new use case not previously envisioned?",
-         "stakeholder_variation": "Stakeholder Variation: Does the modification involve different stakeholders compared to the original use?",
-         "regulatory_regime_shift": "Regulatory Regime Shift: Does the change invoke a different set of legal or regulatory requirements?"
+         "new_use_case": (
+             "New Use Case Identification: Does the modification introduce a new use case not previously envisioned?\n"
+             "Guidance:\n"
+             "- 1: No new use case introduced; the application remains identical.\n"
+             "- 3: Minor deviation or extension of the existing use case.\n"
+             "- 5: A completely new and distinct use case is introduced."
+         ),
+         "stakeholder_variation": (
+             "Stakeholder Variation: Does the modification involve different stakeholders (e.g., new user groups or regulators)?\n"
+             "Guidance:\n"
+             "- 1: No change in stakeholder groups.\n"
+             "- 3: Some additional stakeholders are involved, but core groups remain unchanged.\n"
+             "- 5: A significant shift with entirely new stakeholder groups."
+         ),
+         "regulatory_regime_shift": (
+             "Regulatory Regime Shift: Does the change invoke a different set of legal or regulatory requirements?\n"
+             "Guidance:\n"
+             "- 1: No change in regulatory environment.\n"
+             "- 3: Moderate change requiring some adjustments in compliance.\n"
+             "- 5: Major shift necessitating entirely new regulatory considerations."
+         )
     }
     intended_purpose_scores = {}
     for key, question in intended_purpose_subcriteria.items():
@@ -133,8 +151,20 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 2. Architectural/Algorithmic Changes (25%)
     st.subheader("Architectural/Algorithmic Changes (25%)")
     architectural_subcriteria = {
-         "nature_of_change": "Nature of Change: How significant is the modification? (1–2: Minor optimization; 3: Moderate; 4–5: Fundamental redesign)",
-         "impact_on_model_structure": "Impact on Model Structure: Do the changes affect core components (high score) or peripheral modules (low score)?"
+         "nature_of_change": (
+             "Nature of Change: How significant is the modification?\n"
+             "Guidance:\n"
+             "- 1-2: Minor optimization or parameter tuning with negligible impact on core logic.\n"
+             "- 3: Moderate modifications, such as replacing a minor component while retaining overall architecture.\n"
+             "- 4-5: Fundamental redesign that alters the internal logic or core algorithm."
+         ),
+         "impact_on_model_structure": (
+             "Impact on Model Structure: Do the changes affect core components or peripheral modules?\n"
+             "Guidance:\n"
+             "- 1: Changes are limited to peripheral or non-critical modules.\n"
+             "- 3: Some core elements are affected, but overall structure remains intact.\n"
+             "- 5: Major alterations to core components that significantly change the model's functionality."
+         )
     }
     architectural_scores = {}
     for key, question in architectural_subcriteria.items():
@@ -145,10 +175,34 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 3. Data/Training Changes (20%)
     st.subheader("Data/Training Changes (20%)")
     data_subcriteria = {
-         "data_volume_adjustment": "Data Volume Adjustment: Does the change involve a significant increase or decrease in training data volume?",
-         "data_diversity": "Data Diversity and Representativeness: Is there a notable change in data diversity or representativeness?",
-         "data_quality": "Data Quality and Integrity: Does the new data have different quality standards or introduce noise/bias?",
-         "retraining_impact": "Retraining Impact: Does retraining on the new data alter performance metrics or risk profiles?"
+         "data_volume_adjustment": (
+             "Data Volume Adjustment: Does the change involve a significant increase or decrease in training data volume?\n"
+             "Guidance:\n"
+             "- 1: No significant change in volume.\n"
+             "- 3: Moderate change (e.g., 20-30% increase or decrease).\n"
+             "- 5: Large-scale change (e.g., doubling or halving the data)."
+         ),
+         "data_diversity": (
+             "Data Diversity and Representativeness: Is there a notable change in the diversity of the training data?\n"
+             "Guidance:\n"
+             "- 1: No change in diversity.\n"
+             "- 3: Some change in representativeness, affecting certain groups or scenarios moderately.\n"
+             "- 5: A significant shift in data diversity that could impact bias or generalizability."
+         ),
+         "data_quality": (
+             "Data Quality and Integrity: Does the new data have different quality standards or introduce noise/bias?\n"
+             "Guidance:\n"
+             "- 1: Data quality remains consistent.\n"
+             "- 3: Moderate differences in quality or slight introduction of noise.\n"
+             "- 5: Significant quality issues or bias introduced that impact model reliability."
+         ),
+         "retraining_impact": (
+             "Retraining Impact: Does retraining on the new data alter performance metrics or risk profiles?\n"
+             "Guidance:\n"
+             "- 1: No measurable impact on performance.\n"
+             "- 3: Moderate impact with some change in key metrics.\n"
+             "- 5: Significant performance changes or emergence of new risk profiles."
+         )
     }
     data_scores = {}
     for key, question in data_subcriteria.items():
@@ -159,9 +213,27 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 4. Performance/Risk Impact (15%)
     st.subheader("Performance/Risk Impact (15%)")
     performance_subcriteria = {
-         "quantitative_performance": "Quantitative Performance Metrics: Rate the change in key performance metrics (e.g., accuracy, error rates).",
-         "qualitative_risk": "Qualitative Risk Assessment: Does the modification introduce new risks (e.g., security vulnerabilities, ethical concerns)?",
-         "adversarial_testing": "Adversarial and Robustness Testing: How does the change affect robustness under adversarial conditions?"
+         "quantitative_performance": (
+             "Quantitative Performance Metrics: Rate the change in key performance metrics (accuracy, error rates, robustness).\n"
+             "Guidance:\n"
+             "- 1: No change in performance metrics.\n"
+             "- 3: Moderate change (e.g., 5-10% difference).\n"
+             "- 5: Severe change (e.g., >10% drop or significant improvement) affecting reliability."
+         ),
+         "qualitative_risk": (
+             "Qualitative Risk Assessment: Does the modification introduce new risks (security vulnerabilities, ethical concerns)?\n"
+             "Guidance:\n"
+             "- 1: No new risks identified.\n"
+             "- 3: Some new risks, but manageable or moderate in scope.\n"
+             "- 5: Major new risks that could have significant adverse effects."
+         ),
+         "adversarial_testing": (
+             "Adversarial and Robustness Testing: How does the change affect robustness under adversarial conditions?\n"
+             "Guidance:\n"
+             "- 1: Robustness remains unchanged.\n"
+             "- 3: Moderate reduction in robustness under adversarial testing.\n"
+             "- 5: Significant degradation in adversarial robustness."
+         )
     }
     performance_scores = {}
     for key, question in performance_subcriteria.items():
@@ -172,9 +244,27 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 5. Future Deployment Change (10%)
     st.subheader("Future Deployment Change (10%)")
     future_deployment_subcriteria = {
-         "integration_context": "Integration Context Variation: Does the modification require changes to the deployment context?",
-         "end_user_experience": "End-User Experience Impact: Does the modification change how end users interact with the system?",
-         "regulatory_compliance": "Regulatory Compliance Considerations: Does the change affect compliance by introducing new legal or policy challenges?"
+         "integration_context": (
+             "Integration Context Variation: Does the modification require changes to the deployment context (e.g., new hardware, software integrations)?\n"
+             "Guidance:\n"
+             "- 1: No change in deployment context.\n"
+             "- 3: Moderate adjustments needed (e.g., minor hardware or software tweaks).\n"
+             "- 5: Major changes requiring significant modifications to deployment environments."
+         ),
+         "end_user_experience": (
+             "End-User Experience Impact: Does the modification change how end users interact with the system (UI, workflows)?\n"
+             "Guidance:\n"
+             "- 1: No impact on end-user experience.\n"
+             "- 3: Some modifications in UI or workflow, but not disruptive.\n"
+             "- 5: Significant impact, requiring a complete overhaul of user interaction."
+         ),
+         "regulatory_compliance": (
+             "Regulatory Compliance Considerations: Does the change affect compliance by introducing new legal or policy challenges?\n"
+             "Guidance:\n"
+             "- 1: No change in compliance requirements.\n"
+             "- 3: Moderate impact requiring some regulatory review.\n"
+             "- 5: Major regulatory implications necessitating new compliance frameworks."
+         )
     }
     future_deployment_scores = {}
     for key, question in future_deployment_subcriteria.items():
