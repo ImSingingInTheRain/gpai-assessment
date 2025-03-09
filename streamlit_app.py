@@ -26,7 +26,7 @@ This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).
 - Traditional statistical models  
 - RPA systems.
 
-Confirm your model is not in these categories.
+Confirm your model is not in these categories before proceeding.
 """)
 
 # ---------------------------------------------
@@ -53,8 +53,8 @@ developed_internally = st.radio(
 )
 
 st.info("""
-- **Internally Developed:** Select this option also if the model development has been commissioned to a third party, but is ultimately owned by your organization.
-- **Third Party:** Select this option if the model has been procured from a third party, or if it is acquired with an open source license.
+- **Internally Developed:** Continue to the assessment directly.
+- **Third Party:** Additional evaluation of modifications is required.
 """)
 
 thirdparty_modified = "N/A"
@@ -106,42 +106,104 @@ if (
     st.stop()
 
 # ---------------------------------------------
-# Step 3a: Substantial Modification Assessment
+# Step 3a: Substantial Modification Assessment using MCDA
 # ---------------------------------------------
 if developed_internally == "Third Party" and thirdparty_modified == "Yes":
     st.header("Step 3a: Substantial Modification Assessment")
     st.info("""
-    Answer "Yes" or "No" to each question. Weights:
-    - Intended Purpose Change (30%)
-    - Architectural/Algorithmic Changes (25%)
-    - Data/Training Changes (20%)
-    - Performance Impact (15%)
-    - Future Deployment Change (10%)
-
-    **Total score ≥ 50% indicates substantial modifications.**
+This assessment framework evaluates modifications using a Multi-Criteria Decision Analysis (MCDA) approach.  
+For each subcriterion, rate the change on a scale of 1 (minimal change) to 5 (significant change).  
+The overall score is computed as the weighted sum of the average scores of each category.  
+A higher overall score indicates more substantial modifications. An overall score > 3.5 suggests substantial modifications.
     """)
 
-    criteria = {
-        "purpose_change": ("Has intended purpose or functionality significantly changed?", 30),
-        "arch_change": ("Are architecture/algorithm significantly altered?", 25),
-        "data_change": ("Have training data or dataset composition significantly changed?", 20),
-        "performance_change": ("Has the model’s performance or risk profile significantly changed?", 15),
-        "future_deployment": ("Could future deployment/integration significantly change the model's behavior?", 10)
+    # 1. Intended Purpose Change (30%)
+    st.subheader("Intended Purpose Change (30%)")
+    intended_purpose_subcriteria = {
+         "new_use_case": "New Use Case Identification: Does the modification introduce a new use case not previously envisioned?",
+         "stakeholder_variation": "Stakeholder Variation: Does the modification involve different stakeholders compared to the original use?",
+         "regulatory_regime_shift": "Regulatory Regime Shift: Does the change invoke a different set of legal or regulatory requirements?"
     }
+    intended_purpose_scores = {}
+    for key, question in intended_purpose_subcriteria.items():
+         intended_purpose_scores[key] = st.radio(question, options=[1, 2, 3, 4, 5], key=f"intended_{key}")
+    intended_purpose_avg = sum(intended_purpose_scores.values()) / len(intended_purpose_scores)
+    st.write("Intended Purpose Average Score:", round(intended_purpose_avg, 2))
 
-    total_score = 0
-    for key, (question, weight) in criteria.items():
-        sub_mod_assessment[key] = st.radio(question, ["Yes", "No"], key=f"submod_{key}")
-        total_score += weight if sub_mod_assessment[key] == "Yes" else 0
-        st.markdown(f"<small>Weight: {weight}%</small>", unsafe_allow_html=True)
+    # 2. Architectural/Algorithmic Changes (25%)
+    st.subheader("Architectural/Algorithmic Changes (25%)")
+    architectural_subcriteria = {
+         "nature_of_change": "Nature of Change: How significant is the modification? (1–2: Minor optimization; 3: Moderate; 4–5: Fundamental redesign)",
+         "impact_on_model_structure": "Impact on Model Structure: Do the changes affect core components (high score) or peripheral modules (low score)?"
+    }
+    architectural_scores = {}
+    for key, question in architectural_subcriteria.items():
+         architectural_scores[key] = st.radio(question, options=[1, 2, 3, 4, 5], key=f"arch_{key}")
+    architectural_avg = sum(architectural_scores.values()) / len(architectural_scores)
+    st.write("Architectural/Algorithmic Average Score:", round(architectural_avg, 2))
 
-    st.write("**Cumulative Modification Score:**", total_score, "%")
+    # 3. Data/Training Changes (20%)
+    st.subheader("Data/Training Changes (20%)")
+    data_subcriteria = {
+         "data_volume_adjustment": "Data Volume Adjustment: Does the change involve a significant increase or decrease in training data volume?",
+         "data_diversity": "Data Diversity and Representativeness: Is there a notable change in data diversity or representativeness?",
+         "data_quality": "Data Quality and Integrity: Does the new data have different quality standards or introduce noise/bias?",
+         "retraining_impact": "Retraining Impact: Does retraining on the new data alter performance metrics or risk profiles?"
+    }
+    data_scores = {}
+    for key, question in data_subcriteria.items():
+         data_scores[key] = st.radio(question, options=[1, 2, 3, 4, 5], key=f"data_{key}")
+    data_avg = sum(data_scores.values()) / len(data_scores)
+    st.write("Data/Training Average Score:", round(data_avg, 2))
 
-    if total_score < 50:
-        st.success("Minor modifications only—no provider obligations apply.")
-        st.stop()
+    # 4. Performance/Risk Impact (15%)
+    st.subheader("Performance/Risk Impact (15%)")
+    performance_subcriteria = {
+         "quantitative_performance": "Quantitative Performance Metrics: Rate the change in key performance metrics (e.g., accuracy, error rates).",
+         "qualitative_risk": "Qualitative Risk Assessment: Does the modification introduce new risks (e.g., security vulnerabilities, ethical concerns)?",
+         "adversarial_testing": "Adversarial and Robustness Testing: How does the change affect robustness under adversarial conditions?"
+    }
+    performance_scores = {}
+    for key, question in performance_subcriteria.items():
+         performance_scores[key] = st.radio(question, options=[1, 2, 3, 4, 5], key=f"perf_{key}")
+    performance_avg = sum(performance_scores.values()) / len(performance_scores)
+    st.write("Performance/Risk Impact Average Score:", round(performance_avg, 2))
+
+    # 5. Future Deployment Change (10%)
+    st.subheader("Future Deployment Change (10%)")
+    future_deployment_subcriteria = {
+         "integration_context": "Integration Context Variation: Does the modification require changes to the deployment context?",
+         "end_user_experience": "End-User Experience Impact: Does the modification change how end users interact with the system?",
+         "regulatory_compliance": "Regulatory Compliance Considerations: Does the change affect compliance by introducing new legal or policy challenges?"
+    }
+    future_deployment_scores = {}
+    for key, question in future_deployment_subcriteria.items():
+         future_deployment_scores[key] = st.radio(question, options=[1, 2, 3, 4, 5], key=f"future_{key}")
+    future_deployment_avg = sum(future_deployment_scores.values()) / len(future_deployment_scores)
+    st.write("Future Deployment Average Score:", round(future_deployment_avg, 2))
+
+    # Calculate overall weighted score using the defined weights
+    overall_score = (0.30 * intended_purpose_avg +
+                     0.25 * architectural_avg +
+                     0.20 * data_avg +
+                     0.15 * performance_avg +
+                     0.10 * future_deployment_avg)
+    st.write("**Overall Modification Score:**", round(overall_score, 2), "out of 5")
+
+    # Interpretation: overall score > 3.5 indicates substantial modifications.
+    if overall_score <= 3.5:
+         st.success("Minor modifications only—no provider obligations apply.")
+         st.stop()
     else:
-        st.warning("Substantial modifications identified—continue to detailed assessment.")
+         st.warning("Substantial modifications identified—continue to detailed assessment.")
+
+    # Save the MCDA scores for later audit
+    sub_mod_assessment["intended_purpose_avg"] = intended_purpose_avg
+    sub_mod_assessment["architectural_avg"] = architectural_avg
+    sub_mod_assessment["data_avg"] = data_avg
+    sub_mod_assessment["performance_avg"] = performance_avg
+    sub_mod_assessment["future_deployment_avg"] = future_deployment_avg
+    sub_mod_assessment["overall_score"] = overall_score
 
 # ---------------------------------------------
 # Step 4: Detailed GPAI Assessment
