@@ -233,7 +233,7 @@ if classification == "GPAI":
         st.warning(borderline_text)
         final_decision = st.radio(
             "Final systemic risk decision:",
-            ["GPAI with systemic risk", "Not GPAI with systemic risk"],
+            ["GPAI with systemic risk", "GPAI without systemic risk"],
             key="final_sys_decision"
         )
         sys_rationale = st.text_area("Provide rationale:", key="sys_rationale")
