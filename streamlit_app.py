@@ -3,122 +3,93 @@ import pandas as pd
 import io
 
 # ---------------------------------------------
-# Initialize answer dictionaries so they're in scope
+# Initialize answer dictionaries
 # ---------------------------------------------
-mod_answers = {}
+sub_mod_assessment = {}
 pre_answers = {}
 answers = {}
 sys_risk_answers = {}
 
 # ---------------------------------------------
-# Title and Intro
+# Title and Introduction
 # ---------------------------------------------
 st.title("General-Purpose AI Model Classification Tool")
 
 st.info("""
-**Important:**  
-Automatically excluded from the GPAI assessment: AI models that are exclusively specialized or narrowly focused without substantial capability to generalize or adapt flexibly across multiple distinct tasks.
-
-**Examples:**
-- Rule-based systems
-- Small supervised classifiers (e.g., spam detection)
-- Single-purpose NLP or vision models
-- Specialized anomaly detection systems
-- Traditional statistical models
+**Important Notice:**  
+This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).  
+**Automatically Excluded Models (examples):**  
+- Rule-based systems  
+- Small supervised classifiers (e.g., spam detection)  
+- Single-purpose NLP or vision models  
+- Specialized anomaly detection systems  
+- Traditional statistical models  
 - RPA systems
 
+Confirm your model is not in these categories before proceeding.
 """)
 
 # ---------------------------------------------
 # Step 1: Automatic Exclusion Check
 # ---------------------------------------------
 st.header("Step 1: Automatic Exclusion Check")
-
 auto_exclude = st.radio(
-    "Does this exclusion criterion clearly apply to your AI model?",
+    "Does the above exclusion criterion clearly apply to your AI model?",
     ['Yes', 'No'],
     key="auto_exclude"
 )
-
 if auto_exclude == 'Yes':
-    st.error("Automatically discarded – Not GPAI.")
+    st.error("Your model is automatically excluded from GPAI assessment.")
     st.stop()
 
 # ---------------------------------------------
 # Step 2: Provider Determination
 # ---------------------------------------------
-
-st.subheader("Step 2: Provider Determination")
+st.header("Step 2: Provider Determination")
 developed_internally = st.radio(
-    "Was the model developed internally or by a third party?",
+    "Was the model developed internally or procured from a third party?",
     ["Internally Developed", "Third Party"],
     key="provider_determination"
 )
 
 st.info("""
-**Important:**  
-internally developing a model applies also when the organization has the model developed under its own name or trademark (including via contractual arrangements with third parties), and then uses or sell such models.
-
-**Important:**  
-If the model is procured from a third party withtout **any** modification, it is automatically excluded from GPAI obligations. No further assessment is needed. 
-
+- **Internally Developed:** Continue to the assessment directly.
+- **Third Party:** Additional evaluation of modifications is required.
 """)
 
+thirdparty_modified = "N/A"
 if developed_internally == "Third Party":
-    st.info("Since the model is from a third party, please assess modifications to determine if you're a provider.")
-
-    st.subheader("Step 2a: Substantial Modification Assessment")
-
-    mod_questions = {
-        "param_change": (
-            "Are more than 10% of parameters or architecture significantly changed?",
-            "Over 10% change typically indicates substantial modification."
-        ),
-        "purpose_change": (
-            "Has the intended purpose or functionality significantly changed or expanded?",
-            "Major task adaptations or new capabilities indicate substantial modification."
-        ),
-        "data_change": (
-            "Has significant retraining occurred on specialized or distinctly different datasets?",
-            "Extensive retraining with new datasets indicates substantial modification."
-        ),
-        "integration_change": (
-            "Does modification significantly alter downstream applicability or integration possibilities?",
-            "Major changes affecting downstream integration imply substantial modifications."
-        ),
-    }
-
-    for key, (question, guidance) in mod_questions.items():
-        mod_answers[key] = st.radio(question, ["Yes", "No"], key=f"mod_{key}")
-        st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
-
-    if "Yes" in mod_answers.values():
-        st.warning("Substantial modification – You are considered a provider under the AI Act. Proceed to pre-screening.")
-    else:
-        st.success("Minor modification – Not considered a provider. No further obligations apply.")
+    thirdparty_modified = st.radio(
+        "Has the third-party model been modified in any way (e.g., retraining, architectural changes)?",
+        ["Yes", "No"],
+        key="thirdparty_modified"
+    )
+    if thirdparty_modified == "No":
+        st.success("Unmodified third-party models are excluded from GPAI obligations.")
         st.stop()
+    else:
+        st.info("Third-party model modifications detected—continue assessment.")
 
 # ---------------------------------------------
 # Step 3: Pre-screening Questions
 # ---------------------------------------------
-st.subheader("Step 3: Pre-screening Questions")
-
+st.header("Step 3: Pre-screening Questions")
 pre_questions = {
     "params_below": (
         "Is the model's parameter count significantly below 1 billion?",
-        "Models significantly below 1 billion parameters lack significant generality."
+        "Models under 1 billion parameters generally lack significant generality."
     ),
     "trained_specialized": (
-        "Was the model trained on highly specialized or limited data rather than large and diverse datasets?",
-        "General-purpose models typically require large and diverse datasets."
+        "Was the model trained primarily on specialized, limited datasets?",
+        "General-purpose AI typically relies on large, diverse training datasets."
     ),
     "single_task": (
-        "Does the model exclusively demonstrate competent performance on a single or very narrow task?",
-        "General-purpose models must perform multiple distinct tasks."
+        "Is the model effective only for a single, narrowly-defined task?",
+        "GPAI models must competently address multiple distinct tasks."
     ),
     "adaptability": (
-        "Is there no clear pathway to adapt the model to different downstream tasks?",
-        "Adaptability via fine-tuning or APIs is required."
+        "Is the model unable to adapt or be repurposed for different tasks?",
+        "Adaptability (e.g., fine-tuning) is crucial for GPAI classification."
     )
 }
 
@@ -131,8 +102,46 @@ if (
     or pre_answers["single_task"] == "Yes"
     or pre_answers["adaptability"] == "Yes"
 ):
-    st.error("Eliminated (Not GPAI)")
+    st.error("Pre-screening outcome: Model is eliminated from GPAI classification.")
     st.stop()
+
+# ---------------------------------------------
+# Step 3a: Substantial Modification Assessment
+# ---------------------------------------------
+if developed_internally == "Third Party" and thirdparty_modified == "Yes":
+    st.header("Step 3a: Substantial Modification Assessment")
+    st.info("""
+    Answer "Yes" or "No" to each question. Weights:
+    - Intended Purpose Change (30%)
+    - Architectural/Algorithmic Changes (25%)
+    - Data/Training Changes (20%)
+    - Performance Impact (15%)
+    - Future Deployment Change (10%)
+
+    **Total score ≥ 50% indicates substantial modifications.**
+    """)
+
+    criteria = {
+        "purpose_change": ("Has intended purpose or functionality significantly changed?", 30),
+        "arch_change": ("Are architecture/algorithm significantly altered?", 25),
+        "data_change": ("Have training data or dataset composition significantly changed?", 20),
+        "performance_change": ("Has the model’s performance or risk profile significantly changed?", 15),
+        "future_deployment": ("Could future deployment/integration significantly change the model's behavior?", 10)
+    }
+
+    total_score = 0
+    for key, (question, weight) in criteria.items():
+        sub_mod_assessment[key] = st.radio(question, ["Yes", "No"], key=f"submod_{key}")
+        total_score += weight if sub_mod_assessment[key] == "Yes" else 0
+        st.markdown(f"<small>Weight: {weight}%</small>", unsafe_allow_html=True)
+
+    st.write("**Cumulative Modification Score:**", total_score, "%")
+
+    if total_score < 50:
+        st.success("Minor modifications only—no provider obligations apply.")
+        st.stop()
+    else:
+        st.warning("Substantial modifications identified—continue to detailed assessment.")
 
 # ---------------------------------------------
 # Step 4: Detailed GPAI Assessment
