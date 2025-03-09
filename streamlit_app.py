@@ -57,7 +57,7 @@ developed_internally = st.radio(
 
 st.info("""
 **Important:**  
-Internally developing a model applies also when the organization has the model developed under its own name or trademark (including via contractual arrangements with third parties), and then uses or sell such models.
+internally developing a model applies also when the organization has the model developed under its own name or trademark (including via contractual arrangements with third parties), and then uses or sell such models.
 
 **Important:**  
 If the model is procured from a third party withtout **any** modification, it is automatically excluded from GPAI obligations. No further assessment is needed. 
