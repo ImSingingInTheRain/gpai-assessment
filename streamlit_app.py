@@ -24,7 +24,7 @@ This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).
 - Single-purpose NLP or vision models  
 - Specialized anomaly detection systems  
 - Traditional statistical models  
-- RPA systems
+- RPA systems.
 
 Confirm your model is not in these categories before proceeding.
 """)
