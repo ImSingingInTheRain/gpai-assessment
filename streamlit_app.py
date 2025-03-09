@@ -53,8 +53,8 @@ developed_internally = st.radio(
 )
 
 st.info("""
-- **Internally Developed:** Continue to the assessment directly.
-- **Third Party:** Additional evaluation of modifications is required.
+- **Internally Developed:** Select this option also if the model development has been commissioned to a third party, but is ultimately owned by your organization.
+- **Third Party:** Select this option if the model has been procured from a third party, or if it is acquired with an open source license.
 """)
 
 thirdparty_modified = "N/A"
@@ -229,8 +229,7 @@ if classification == "GPAI":
     if sys_risk_answers["flops"] == "Yes" or sys_risk_answers["state_of_art"] == "Yes":
         systemic_classification = "GPAI with systemic risk"
     elif sys_risk_answers["scalability"] == "Yes" or sys_risk_answers["scaffolding"] == "Yes":
-        borderline_text = "Borderline systemic risk – Further review recommended"
-        st.warning(borderline_text)
+        st.warning("Borderline systemic risk – Further review recommended")
         final_decision = st.radio(
             "Final systemic risk decision:",
             ["GPAI with systemic risk", "GPAI without systemic risk"],
@@ -265,45 +264,49 @@ if classification == "GPAI":
     else:
         st.warning("No obligations apply because the final classification is 'Not GPAI with systemic risk'.")
 
-    # ---------------------------------------------
-    # Final Step: Model Details + CSV Download
-    # ---------------------------------------------
-    model_name = st.text_input("Model Name or Unique Identifier", key="model_name")
-    model_owner = st.text_input("Model Owner", key="model_owner")
+# ---------------------------------------------
+# Final Step: Model Details + CSV Download
+# ---------------------------------------------
+model_name = st.text_input("Model Name or Unique Identifier", key="model_name")
+model_owner = st.text_input("Model Owner", key="model_owner")
 
-    # Gather all relevant answers
-    all_data = {
-        "Model Name": model_name,
-        "Model Owner": model_owner,
-        "Final Classification": classification,
-        "Systemic Risk Classification": systemic_classification,
-    }
+# Gather all relevant answers
+all_data = {
+    "Model Name": model_name,
+    "Model Owner": model_owner,
+    "Final Classification": classification,
+    "Systemic Risk Classification": systemic_classification if classification == "GPAI" else "N/A",
+}
 
-    # Merge Step 2 answers (only if third party, otherwise might be empty)
-    for k, v in mod_answers.items():
-        all_data[f"Step2_ModAssessment_{k}"] = v
-    
-    # Merge Step 3 answers
-    for k, v in pre_answers.items():
-        all_data[f"Step3_PreScreen_{k}"] = v
+# Merge Step 2 answers (modification assessment)
+for k, v in sub_mod_assessment.items():
+    all_data[f"Step2_ModAssessment_{k}"] = v
 
-    # Merge Step 4 answers
-    for k, v in answers.items():
-        all_data[f"Step4_Detailed_{k}"] = v
+# Merge Step 3 answers (pre-screening)
+for k, v in pre_answers.items():
+    all_data[f"Step3_PreScreen_{k}"] = v
 
-    # Merge Step 5 answers
-    for k, v in sys_risk_answers.items():
-        all_data[f"Step5_SysRisk_{k}"] = v
+# Merge Step 4 answers (detailed assessment)
+for k, v in answers.items():
+    all_data[f"Step4_Detailed_{k}"] = v
 
-    # Download button for CSV
-    if st.button("Download CSV Summary"):
-        buffer = io.StringIO()
-        df = pd.DataFrame([all_data])  # single-row dataframe
-        df.to_csv(buffer, index=False)
+# Merge Step 5 answers (systemic risk assessment)
+for k, v in sys_risk_answers.items():
+    all_data[f"Step5_SysRisk_{k}"] = v
 
-        st.download_button(
-            label="Click to Download CSV",
-            data=buffer.getvalue(),
-            file_name=f"{model_name}_assessment.csv",
-            mime="text/csv"
-        )
+# Merge textual rationales for audit trails (if provided)
+all_data["Step4_Manual_Rationale"] = st.session_state.get("manual_rationale", "")
+all_data["Step5_SysRationale"] = st.session_state.get("sys_rationale", "")
+
+# Download button for CSV
+if st.button("Download CSV Summary"):
+    buffer = io.StringIO()
+    df = pd.DataFrame([all_data])  # single-row dataframe
+    df.to_csv(buffer, index=False)
+
+    st.download_button(
+        label="Click to Download CSV",
+        data=buffer.getvalue(),
+        file_name=f"{model_name}_assessment.csv",
+        mime="text/csv"
+    )
