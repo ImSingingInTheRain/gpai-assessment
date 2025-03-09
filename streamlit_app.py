@@ -17,15 +17,7 @@ st.title("General-Purpose AI Model Classification Tool")
 
 st.info("""
 **Important:**  
-If your organization uses a third-party model **without any modification**, you are **not considered a provider** under the AI Act and no further assessment is needed.
-""")
-
-# ---------------------------------------------
-# Step 1: Automatic Exclusion Check
-# ---------------------------------------------
-st.header("Step 1: Automatic Exclusion Check")
-st.markdown("""
-**Criterion:** The AI model is exclusively specialized or narrowly focused without substantial capability to generalize or adapt flexibly across multiple distinct tasks.
+Automatically excluded from the GPAI assessment: AI models that are exclusively specialized or narrowly focused without substantial capability to generalize or adapt flexibly across multiple distinct tasks.
 
 **Examples:**
 - Rule-based systems
@@ -34,7 +26,14 @@ st.markdown("""
 - Specialized anomaly detection systems
 - Traditional statistical models
 - RPA systems
+
 """)
+
+# ---------------------------------------------
+# Step 1: Automatic Exclusion Check
+# ---------------------------------------------
+st.header("Step 1: Automatic Exclusion Check")
+
 auto_exclude = st.radio(
     "Does this exclusion criterion clearly apply to your AI model?",
     ['Yes', 'No'],
@@ -48,12 +47,22 @@ if auto_exclude == 'Yes':
 # ---------------------------------------------
 # Step 2: Provider Determination
 # ---------------------------------------------
+
 st.subheader("Step 2: Provider Determination")
 developed_internally = st.radio(
     "Was the model developed internally or by a third party?",
     ["Internally Developed", "Third Party"],
     key="provider_determination"
 )
+
+st.info("""
+**Important:**  
+Internally developing a model applies also when the organization has the model developed under its own name or trademark (including via contractual arrangements with third parties), and then uses or sell such models.
+
+**Important:**  
+If the model is procured from a third party withtout **any** modification, it is automatically excluded from GPAI obligations. No further assessment is needed. 
+
+""")
 
 if developed_internally == "Third Party":
     st.info("Since the model is from a third party, please assess modifications to determine if you're a provider.")
