@@ -127,7 +127,7 @@ An overall score > 3.5 indicates substantial modifications.
     intended_purpose_subcriteria = {
          "intended_tasks": (
              "Intended Tasks & Integration:\n"
-             "Does the modification change the description of intended tasks or affect the list of high-risk/restricted tasks (Annex XI 1.(a))?\n"
+             "Does the modification change the description of intended tasks or affect the list of high-risk or restricted tasks (Annex XI 1.(a))?\n"
              "Guidance:\n"
              "  1: No change.\n  3: Minor change in task description.\n  5: Introduces a completely new use case with different stakeholder/regulatory implications."
          ),
