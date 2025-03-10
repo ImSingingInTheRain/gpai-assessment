@@ -24,7 +24,7 @@ This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).
 - Single-purpose NLP or vision models  
 - Specialized anomaly detection systems  
 - Traditional statistical models  
-- RPA systems
+- RPA systems.
 
 Confirm your model is not in these categories before proceeding.
 """)
@@ -111,35 +111,37 @@ if (
 if developed_internally == "Third Party" and thirdparty_modified == "Yes":
     st.header("Step 3a: Substantial Modification Assessment")
     st.info("""
-This assessment framework evaluates modifications using a Multi-Criteria Decision Analysis (MCDA) approach.  
-For each subcriterion, rate the change on a scale of 1 (minimal change) to 5 (significant change).  
-The overall score is computed as the weighted sum of the average scores of each category.  
-A higher overall score indicates more substantial modifications. An overall score > 3.5 suggests substantial modifications.
+This framework evaluates modifications using a Multi-Criteria Decision Analysis (MCDA) approach.
+For each subcriterion below, assign a score from 1 (very low impact) to 5 (very high impact).  
+The overall score is computed as a weighted sum of the category averages:
+    • Intended Purpose Change: 30%
+    • Architectural/Algorithmic Changes: 25%
+    • Data/Training Changes: 20%
+    • Performance/Risk Impact: 15%
+    • Future Deployment Change: 10%
+An overall score > 3.5 indicates substantial modifications.
     """)
 
     # 1. Intended Purpose Change (30%)
     st.subheader("Intended Purpose Change (30%)")
     intended_purpose_subcriteria = {
-         "new_use_case": (
-             "New Use Case Identification: Does the modification introduce a new use case not previously envisioned?\n"
+         "intended_tasks": (
+             "Intended Tasks & Integration:\n"
+             "Does the modification change the description of intended tasks or affect the list of high-risk/restricted tasks (Annex XI 1.(a))?\n"
              "Guidance:\n"
-             "- 1: No new use case introduced; the application remains identical.\n"
-             "- 3: Minor deviation or extension of the existing use case.\n"
-             "- 5: A completely new and distinct use case is introduced."
+             "  1: No change.\n  3: Minor change in task description.\n  5: Introduces a completely new use case with different stakeholder/regulatory implications."
          ),
-         "stakeholder_variation": (
-             "Stakeholder Variation: Does the modification involve different stakeholders (e.g., new user groups or regulators)?\n"
+         "acceptable_use": (
+             "Acceptable Use Policy Consistency:\n"
+             "Does the modification affect acceptable use policy elements (Annex XI 1.(b))?\n"
              "Guidance:\n"
-             "- 1: No change in stakeholder groups.\n"
-             "- 3: Some additional stakeholders are involved, but core groups remain unchanged.\n"
-             "- 5: A significant shift with entirely new stakeholder groups."
+             "  1: No change.\n  3: Some adjustments in policy.\n  5: Substantial policy revisions that alter permitted applications."
          ),
-         "regulatory_regime_shift": (
-             "Regulatory Regime Shift: Does the change invoke a different set of legal or regulatory requirements?\n"
+         "licensing": (
+             "Licensing & Asset Release:\n"
+             "Does the change alter the model’s licensing terms or the list of released assets (Annex XI 1.(f))?\n"
              "Guidance:\n"
-             "- 1: No change in regulatory environment.\n"
-             "- 3: Moderate change requiring some adjustments in compliance.\n"
-             "- 5: Major shift necessitating entirely new regulatory considerations."
+             "  1: No change.\n  3: Minor modifications.\n  5: Changes that could affect downstream usage or legal compliance."
          )
     }
     intended_purpose_scores = {}
@@ -151,19 +153,23 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 2. Architectural/Algorithmic Changes (25%)
     st.subheader("Architectural/Algorithmic Changes (25%)")
     architectural_subcriteria = {
-         "nature_of_change": (
-             "Nature of Change: How significant is the modification?\n"
+         "model_architecture": (
+             "Model Architecture and Parameter Changes:\n"
+             "Does the modification change the overall architecture or parameter settings (Annex XI 1.(d))?\n"
              "Guidance:\n"
-             "- 1-2: Minor optimization or parameter tuning with negligible impact on core logic.\n"
-             "- 3: Moderate modifications, such as replacing a minor component while retaining overall architecture.\n"
-             "- 4-5: Fundamental redesign that alters the internal logic or core algorithm."
+             "  1: Minor tweaks.\n  3: Moderate modifications.\n  5: Fundamental redesign."
          ),
-         "impact_on_model_structure": (
-             "Impact on Model Structure: Do the changes affect core components or peripheral modules?\n"
+         "design_training": (
+             "Design Specifications & Training Process:\n"
+             "Are there changes in design choices or training process steps (Annex XI 1 2.(b))?\n"
              "Guidance:\n"
-             "- 1: Changes are limited to peripheral or non-critical modules.\n"
-             "- 3: Some core elements are affected, but overall structure remains intact.\n"
-             "- 5: Major alterations to core components that significantly change the model's functionality."
+             "  1: Negligible impact.\n  3: Moderate revisions.\n  5: Major revisions that could change how the model learns."
+         ),
+         "io_modalities": (
+             "Input/Output Modalities:\n"
+             "Has the modality, format, or limits of inputs/outputs changed (Annex XI 1.(e))?\n"
+             "Guidance:\n"
+             "  1: No change.\n  3: Some changes affecting data handling.\n  5: Significant alteration affecting inputs/outputs."
          )
     }
     architectural_scores = {}
@@ -175,33 +181,29 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 3. Data/Training Changes (20%)
     st.subheader("Data/Training Changes (20%)")
     data_subcriteria = {
-         "data_volume_adjustment": (
-             "Data Volume Adjustment: Does the change involve a significant increase or decrease in training data volume?\n"
+         "data_acquisition": (
+             "Data Acquisition & Composition:\n"
+             "Does the modification alter data sourcing (methods, time periods, source proportions) (Annex XI 1 2.(c))?\n"
              "Guidance:\n"
-             "- 1: No significant change in volume.\n"
-             "- 3: Moderate change (e.g., 20-30% increase or decrease).\n"
-             "- 5: Large-scale change (e.g., doubling or halving the data)."
+             "  1: No change.\n  3: Moderate change.\n  5: Substantial changes that could introduce bias."
          ),
-         "data_diversity": (
-             "Data Diversity and Representativeness: Is there a notable change in the diversity of the training data?\n"
+         "data_processing": (
+             "Data Processing & Quality:\n"
+             "Are there modifications in data processing techniques (handling copyrighted, personal, or harmful data) (Annex XI 1 2.(c), Draft Document 17)?\n"
              "Guidance:\n"
-             "- 1: No change in diversity.\n"
-             "- 3: Some change in representativeness, affecting certain groups or scenarios moderately.\n"
-             "- 5: A significant shift in data diversity that could impact bias or generalizability."
+             "  1: Minor adjustments.\n  3: Moderate changes.\n  5: Major processing changes with potential impacts on quality."
          ),
-         "data_quality": (
-             "Data Quality and Integrity: Does the new data have different quality standards or introduce noise/bias?\n"
+         "compute_resources": (
+             "Computational Resources:\n"
+             "Do training hardware, duration, or compute metrics change (Annex XI 1 2.(d))?\n"
              "Guidance:\n"
-             "- 1: Data quality remains consistent.\n"
-             "- 3: Moderate differences in quality or slight introduction of noise.\n"
-             "- 5: Significant quality issues or bias introduced that impact model reliability."
+             "  1: Minor resource tweaks.\n  3: Moderate changes.\n  5: Major shifts affecting training scale or efficiency."
          ),
-         "retraining_impact": (
-             "Retraining Impact: Does retraining on the new data alter performance metrics or risk profiles?\n"
+         "energy_consumption": (
+             "Energy Consumption:\n"
+             "Does the modification significantly change energy usage or emissions (Annex XI 1 2.(e))?\n"
              "Guidance:\n"
-             "- 1: No measurable impact on performance.\n"
-             "- 3: Moderate impact with some change in key metrics.\n"
-             "- 5: Significant performance changes or emergence of new risk profiles."
+             "  1: Negligible impact.\n  3: Moderate change.\n  5: Significant impact on environmental cost."
          )
     }
     data_scores = {}
@@ -213,26 +215,23 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 4. Performance/Risk Impact (15%)
     st.subheader("Performance/Risk Impact (15%)")
     performance_subcriteria = {
-         "quantitative_performance": (
-             "Quantitative Performance Metrics: Rate the change in key performance metrics (accuracy, error rates, robustness).\n"
+         "quant_performance": (
+             "Quantitative Performance Metrics:\n"
+             "Does the modification result in measurable changes in accuracy, error rates, or other key metrics (Annex Article 53(1)(a))?\n"
              "Guidance:\n"
-             "- 1: No change in performance metrics.\n"
-             "- 3: Moderate change (e.g., 5-10% difference).\n"
-             "- 5: Severe change (e.g., >10% drop or significant improvement) affecting reliability."
+             "  1: No measurable impact.\n  3: Moderate change (e.g., 5-10% shift).\n  5: Significant performance shifts."
          ),
-         "qualitative_risk": (
-             "Qualitative Risk Assessment: Does the modification introduce new risks (security vulnerabilities, ethical concerns)?\n"
+         "qual_risk": (
+             "Qualitative Risk Assessment:\n"
+             "Does the modification introduce new failure modes, vulnerabilities, or ethical concerns (Annex Article 53(1)(a))?\n"
              "Guidance:\n"
-             "- 1: No new risks identified.\n"
-             "- 3: Some new risks, but manageable or moderate in scope.\n"
-             "- 5: Major new risks that could have significant adverse effects."
+             "  1: No new risks.\n  3: Some new risks but manageable.\n  5: High risk or new critical vulnerabilities."
          ),
-         "adversarial_testing": (
-             "Adversarial and Robustness Testing: How does the change affect robustness under adversarial conditions?\n"
+         "testing_results": (
+             "Testing Process and Results:\n"
+             "Are there significant changes in test outcomes or evaluation reports?\n"
              "Guidance:\n"
-             "- 1: Robustness remains unchanged.\n"
-             "- 3: Moderate reduction in robustness under adversarial testing.\n"
-             "- 5: Significant degradation in adversarial robustness."
+             "  1: Unchanged test results.\n  3: Moderate changes observed.\n  5: Substantial changes impacting reliability."
          )
     }
     performance_scores = {}
@@ -244,26 +243,23 @@ A higher overall score indicates more substantial modifications. An overall scor
     # 5. Future Deployment Change (10%)
     st.subheader("Future Deployment Change (10%)")
     future_deployment_subcriteria = {
-         "integration_context": (
-             "Integration Context Variation: Does the modification require changes to the deployment context (e.g., new hardware, software integrations)?\n"
+         "distribution_release": (
+             "Distribution & Release:\n"
+             "Are there changes in the model’s release date, distribution channels, or level of access (Annex XI 1.(c))?\n"
              "Guidance:\n"
-             "- 1: No change in deployment context.\n"
-             "- 3: Moderate adjustments needed (e.g., minor hardware or software tweaks).\n"
-             "- 5: Major changes requiring significant modifications to deployment environments."
+             "  1: Unchanged.\n  3: Moderate changes.\n  5: Significant changes affecting market timing or user access."
          ),
-         "end_user_experience": (
-             "End-User Experience Impact: Does the modification change how end users interact with the system (UI, workflows)?\n"
+         "external_dependencies": (
+             "External Dependencies:\n"
+             "Does the modification change how the model interacts with external hardware/software (Annex XII 1.(d) and 1.(e))?\n"
              "Guidance:\n"
-             "- 1: No impact on end-user experience.\n"
-             "- 3: Some modifications in UI or workflow, but not disruptive.\n"
-             "- 5: Significant impact, requiring a complete overhaul of user interaction."
+             "  1: No change.\n  3: Some modifications.\n  5: Significant modifications requiring new dependencies."
          ),
-         "regulatory_compliance": (
-             "Regulatory Compliance Considerations: Does the change affect compliance by introducing new legal or policy challenges?\n"
+         "integration_documentation": (
+             "Integration Documentation:\n"
+             "Are there revisions to the technical documentation guiding model integration (Annex XI 1 2.(a))?\n"
              "Guidance:\n"
-             "- 1: No change in compliance requirements.\n"
-             "- 3: Moderate impact requiring some regulatory review.\n"
-             "- 5: Major regulatory implications necessitating new compliance frameworks."
+             "  1: Minor updates.\n  3: Moderate changes.\n  5: Substantial changes affecting downstream implementation."
          )
     }
     future_deployment_scores = {}
@@ -272,7 +268,7 @@ A higher overall score indicates more substantial modifications. An overall scor
     future_deployment_avg = sum(future_deployment_scores.values()) / len(future_deployment_scores)
     st.write("Future Deployment Average Score:", round(future_deployment_avg, 2))
 
-    # Calculate overall weighted score using the defined weights
+    # Calculate overall weighted score using defined weights
     overall_score = (0.30 * intended_purpose_avg +
                      0.25 * architectural_avg +
                      0.20 * data_avg +
@@ -287,7 +283,7 @@ A higher overall score indicates more substantial modifications. An overall scor
     else:
          st.warning("Substantial modifications identified—continue to detailed assessment.")
 
-    # Save the MCDA scores for later audit
+    # Save the MCDA scores for audit purposes
     sub_mod_assessment["intended_purpose_avg"] = intended_purpose_avg
     sub_mod_assessment["architectural_avg"] = architectural_avg
     sub_mod_assessment["data_avg"] = data_avg
@@ -345,11 +341,10 @@ for key, (question, scoring, guidance) in detailed_questions.items():
     st.markdown(f"<small>{guidance}</small>", unsafe_allow_html=True)
     score += scoring[answers[key]]
 
-# Scoring-based classification
+# Scoring-based classification for detailed assessment
 if score >= 10:
     classification = "GPAI"
 elif score >= 6:
-    # Borderline scenario: prompt user to finalize classification
     classification = st.radio(
         "Borderline outcome – classify this model as:",
         ["GPAI", "Not GPAI"],
