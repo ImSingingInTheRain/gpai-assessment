@@ -16,7 +16,7 @@ sys_risk_answers = {}
 st.title("General-Purpose AI Model Classification Tool")
 
 st.info("""
-**Important Notice:**  
+**Important Notice**  
 This tool assesses if your AI model qualifies as a General-Purpose AI (GPAI).  
 **Automatically Excluded Models (examples):**  
 - Rule-based systems  
