@@ -2,6 +2,38 @@ import streamlit as st
 import pandas as pd
 import io
 
+st.set_page_config(
+    page_title="GPAI Model Classification",
+    page_icon="🧠",
+    layout="wide",
+)
+
+st.markdown(
+    """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        html, body, [class*="css"]  {
+            font-family: 'Inter', sans-serif;
+        }
+        .stApp {
+            background: linear-gradient(135deg, #f0f4f7, #d9e4f5);
+        }
+        h1, h2, h3 {
+            color: #2d3436;
+        }
+        .stButton>button {
+            background-color: #1e90ff;
+            color: white;
+            border-radius: 4px;
+            padding: 6px 16px;
+            font-weight: 600;
+            border: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ---------------------------------------------
 # Initialize answer dictionaries
 # ---------------------------------------------
