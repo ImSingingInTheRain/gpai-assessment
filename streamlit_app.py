@@ -9,6 +9,7 @@ sub_mod_assessment = {}
 pre_answers = {}
 answers = {}
 sys_risk_answers = {}
+systemic_classification = "N/A"
 
 # ---------------------------------------------
 # Title and Introduction
